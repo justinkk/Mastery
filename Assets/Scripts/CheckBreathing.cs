@@ -5,9 +5,11 @@ public class CheckBreathing : MonoBehaviour {
 	private Animator anim;
 	private AudioClip clip;
 	private float currTime;
+	private int physicsStepCount;
 
-	public int framesPerSample = 24;
-	public int sampleLength = 1; //length of sample (in seconds?)
+	public int stepsPerSample = 24; //# of physics steps before we check the microphone again
+	public int sampleLength = 1; //length of sample in seconds
+	public int sampleFreq = 44100;
 
 	//Start is called at the beginning
 	void Start ()
@@ -15,7 +17,10 @@ public class CheckBreathing : MonoBehaviour {
         anim = GetComponent<Animator>();
         //Record
         currTime = 0f;
-        clip = Microphone.Start("", false, sampleLength, 44100);
+        clip = Microphone.Start("", false, sampleLength, sampleFreq);
+
+        //Currently on the 0th physics step
+        physicsStepCount = 0;
     }
 
 	// Update is called once per frame
@@ -32,18 +37,19 @@ public class CheckBreathing : MonoBehaviour {
 
 	// FixedUpdate is called once per physics step
 	void FixedUpdate () {
-		/*
-		//Start recording
-		if (framesSoFar == 0) {
-			clip = Microphone.Start();
+		physicsStepCount++;
+		//Every stepsPerSample steps, chekc the microphone for breathing
+		if (physicsStepCount > stepsPerSample) {
+			float[] samples = new float[clip.samples * clip.channels];
+			clip.GetData(samples, 0);
+
+			int position = Microphone.getPosition();
+
+			/*string[] stringSamples = new string[samples.Length];
+			for (int i = 0; i < samples.Length; i++)
+				stringSamples[i] = samples[i].ToString();
+			Debug.Log(string.Join(" ", stringSamples));*/
 		}
-		//Reset after 24 frames
-		if (framesSoFar >= framesPerSample) {
-			//framesSoFar = 0;
-			Microphone.End();
-			Debug.Log("Recorded.");
-		}
-		*/
 	}
 
 	//Algorithm from http://stackoverflow.com/questions/3881256/can-you-programmatically-detect-white-noise
